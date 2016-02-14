@@ -1,17 +1,19 @@
 package com.min.coolnews.util;
 
 
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.min.coolnews.R;
 import com.min.coolnews.model.News;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,8 +25,11 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     public OnItemClickListener onItemClickListener;
 
-    public NewsAdapter(ArrayList<News> data){
+    public Context context;
+
+    public NewsAdapter(List<News> data, Context context){
         mData=data;
+        this.context=context;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -60,8 +65,15 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        ((ViewHolder)holder).newsText.setText(mData.get(position).getContent());
-        ((ViewHolder)holder).newsImage.setImageResource(R.mipmap.ic_launcher);
+        holder.itemView.setAnimation(AnimationUtils.loadAnimation(context,R.anim.item_in_bottom_anim));
+        ((ViewHolder)holder).newsText.setText(mData.get(position).getDesc());
+        if((mData.get(position).getImageUrls()).size()==0){
+            ((ViewHolder) holder).newsImage.setImageResource(R.mipmap.ic_launcher);
+        }else {
+            String imageurl = mData.get(position).getImageUrls().get(0);
+            ImageView imageView=((ViewHolder)holder).newsImage;
+            Utility.loadImageFromUrl(imageurl,imageView);
+        }
     }
 
     @Override
@@ -71,5 +83,11 @@ public class NewsAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     public interface OnItemClickListener {
         void onItemClick(View view,int position);
+    }
+
+    @Override
+    public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+        super.onViewDetachedFromWindow(holder);
+        holder.itemView.clearAnimation();//回收动画防止卡顿
     }
 }

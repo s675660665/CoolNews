@@ -3,9 +3,12 @@ package com.min.coolnews.activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -15,16 +18,48 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.min.coolnews.R;
 import com.min.coolnews.model.News;
+import com.min.coolnews.util.HttpCallBackListener;
+import com.min.coolnews.util.HttpUtil;
 import com.min.coolnews.util.NewsAdapter;
+import com.min.coolnews.util.Utility;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener{
+
+    private RecyclerView recyclerView;
+
+    private Handler handler=new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case 1:
+                    final List<News> list= (List<News>) msg.obj;
+                    final NewsAdapter adapter=new NewsAdapter(list,MainActivity.this);
+                    recyclerView.setAdapter(adapter);
+                    recyclerView.invalidate();
+                    adapter.setOnItemClickListener(new NewsAdapter.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(View view, int position) {
+                            Intent intent=new Intent(MainActivity.this,NewsContentActivity.class);
+                            intent.putExtra("link",list.get(position).getLink());
+                            startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(MainActivity.this,
+                                    view,"share").toBundle());
+                        }
+                    });
+                    recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                    recyclerView.setItemAnimator(new DefaultItemAnimator());
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,34 +75,17 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        RecyclerView recyclerView= (RecyclerView) findViewById(R.id.news_list);
-        ArrayList<News> list = new ArrayList<News>();
-        List<String> url=new ArrayList<String>();
-        url.add("test");
-        url.add("test1");
-        for(int i=0;i<20;i++){
-            News news=new News();
-            news.setTitle("test");
-            news.setSource("test");
-            news.setLink("test");
-            news.setDesc("test");
-            news.setImageUrls(url);
-            news.setPubDate("today");
-            news.setContent("test"+i);
-            list.add(news);
-        }
-        NewsAdapter adapter=new NewsAdapter(list);
-        adapter.setOnItemClickListener(new NewsAdapter.OnItemClickListener() {
+        recyclerView= (RecyclerView) findViewById(R.id.news_list);
+
+        final SwipeRefreshLayout refreshLayout= (SwipeRefreshLayout) findViewById(R.id.refresh);
+        refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onItemClick(View view, int position) {
-                Intent intent=new Intent(MainActivity.this,NewsContentActivity.class);
-                startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(MainActivity.this,
-                        view,"share").toBundle());
+            public void onRefresh() {
+                loadFromServer("5572a108b3cdc86cf39001cd");
+                refreshLayout.setRefreshing(false);
             }
         });
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(adapter);
+        loadFromServer("5572a108b3cdc86cf39001cd");
     }
 
     @Override
@@ -108,14 +126,14 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
+        if (id == R.id.news_inland){
+            loadFromServer("5572a108b3cdc86cf39001cd");
+        } else if (id == R.id.news_abort) {
+            loadFromServer("5572a108b3cdc86cf39001ce");
+        } else if (id == R.id.news_finance) {
+            loadFromServer("5572a108b3cdc86cf39001d0");
+        } else if (id == R.id.news_car) {
+            loadFromServer("5572a108b3cdc86cf39001d0");
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
@@ -125,5 +143,28 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * 从服务器读取新闻数据
+     * @param type
+     */
+    private void loadFromServer(String type){
+        HttpUtil.sendHttpRequest(type, new HttpCallBackListener() {
+            @Override
+            public void onFinish(String response) {
+                final List<News> list=Utility.handleNewsResponse(response);
+                Message message=new Message();
+                message.what=1;
+                message.obj=list;
+                handler.sendMessage(message);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                e.printStackTrace();
+                Toast.makeText(MainActivity.this,"获取数据失败了哦",Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

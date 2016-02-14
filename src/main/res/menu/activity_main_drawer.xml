@@ -3,21 +3,33 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_camera"
+            android:id="@+id/news_inland"
             android:icon="@drawable/ic_menu_camera"
-            android:title="Import" />
+            android:title="国内热点" />
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/news_abort"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Gallery" />
+            android:title="国际热点" />
         <item
-            android:id="@+id/nav_slideshow"
+            android:id="@+id/news_military"
             android:icon="@drawable/ic_menu_slideshow"
-            android:title="Slideshow" />
+            android:title="军事焦点" />
         <item
-            android:id="@+id/nav_manage"
+            android:id="@+id/news_internet"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Tools" />
+            android:title="互联网焦点" />
+        <item
+            android:id="@+id/news_building"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="房产焦点" />
+        <item
+            android:id="@+id/news_car"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="汽车焦点" />
+        <item
+            android:id="@+id/news_finance"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="财经焦点" />
     </group>
 
     <item android:title="Communicate">
